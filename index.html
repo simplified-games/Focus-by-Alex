@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus By Alex - Ultimate Edition</title>
+    <title>Focus By Alex - Pro Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -18,7 +18,7 @@
             --text: #fafafa;
             --text-muted: #71717a;
             --border: rgba(255, 255, 255, 0.08);
-            --input: #18181b;
+            --input: #121212;
         }
 
         .light-theme {
@@ -52,20 +52,17 @@
 
         .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
         
-        /* Custom Checkbox logic */
+        /* Custom Checkbox Ticking */
         .custom-checkbox {
             appearance: none;
-            -webkit-appearance: none;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
         .custom-checkbox:checked {
             background-color: #3b82f6 !important;
             border-color: #3b82f6 !important;
         }
-
         .custom-checkbox:checked::after {
             content: "✓";
             color: white;
@@ -73,18 +70,21 @@
             font-weight: 900;
         }
 
-        /* Perfect Scrollable Height */
+        /* Scrollable List Area */
         #taskList {
-            max-height: 400px;
+            max-height: 450px;
             overflow-y: auto;
             padding-right: 8px;
-            scrollbar-gutter: stable;
         }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         .hidden { display: none !important; }
+
+        .btn-glow {
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 md:p-8">
@@ -92,7 +92,7 @@
     <div id="landingScreen" class="w-full max-w-2xl glass-card rounded-[3.5rem] p-12 text-center">
         <h1 class="text-6xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">Focus By Alex</h1>
         <p class="text-[var(--text-muted)] text-lg mb-10 font-medium">Log in to sync your productivity goals.</p>
-        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-black transition-all">Sign in with Google</button>
+        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-black transition-all btn-glow">Sign in with Google</button>
     </div>
 
     <div id="mainApp" class="w-full max-w-3xl glass-card rounded-[3.5rem] p-8 md:p-12 hidden">
@@ -106,12 +106,12 @@
                     <button onclick="logout()" class="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100">Logout</button>
                 </div>
             </div>
-            <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-[var(--input)] border border-[var(--border)] text-xl transition-transform hover:scale-110">🌙</button>
+            <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-[var(--input)] border border-[var(--border)] text-xl">🌙</button>
         </header>
 
         <div class="flex gap-4 mb-8">
             <div class="relative flex-1">
-                <input type="text" id="searchInput" oninput="render()" placeholder="Search..." class="w-full pl-10 pr-4 py-3 rounded-2xl text-xs outline-none">
+                <input type="text" id="searchInput" oninput="render()" placeholder="Filter goals..." class="w-full pl-10 pr-4 py-3 rounded-2xl text-xs outline-none">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 text-xs">🔍</span>
             </div>
             <select id="sortControl" onchange="render()" class="px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer">
@@ -122,8 +122,8 @@
         </div>
 
         <div class="p-8 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-8 shadow-inner">
-            <input type="text" id="taskInput" placeholder="New Goal Title..." class="w-full bg-transparent !border-0 !p-0 mb-2 text-xl font-bold focus:ring-0">
-            <textarea id="descInput" placeholder="Add details..." class="w-full bg-transparent !border-0 !p-0 mb-6 text-sm opacity-50 focus:ring-0 resize-none h-10"></textarea>
+            <input type="text" id="taskInput" placeholder="What is your main focus today?" class="w-full bg-transparent !border-0 !p-0 mb-2 text-xl font-bold focus:ring-0">
+            <textarea id="descInput" placeholder="Add a goal description..." class="w-full bg-transparent !border-0 !p-0 mb-6 text-sm opacity-50 focus:ring-0 resize-none h-10"></textarea>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <select id="priorityInput" class="px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
@@ -132,12 +132,12 @@
                     <option value="3">High Priority</option>
                 </select>
                 <input type="date" id="dateInput" class="px-4 py-3 rounded-xl text-xs font-bold opacity-60">
-                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95">Add Goal</button>
+                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] btn-glow">Add Task</button>
             </div>
         </div>
 
         <div class="mb-6 px-2">
-            <div class="flex justify-between mb-2"><span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Progress</span><span id="progressPercent" class="text-[9px] font-black text-blue-500">0%</span></div>
+            <div class="flex justify-between mb-2"><span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Journey Progress</span><span id="progressPercent" class="text-[9px] font-black text-blue-500">0%</span></div>
             <div class="w-full h-1 bg-[var(--input)] rounded-full border border-[var(--border)] overflow-hidden">
                 <div id="progressFill" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
             </div>
@@ -147,7 +147,6 @@
     </div>
 
     <script>
-        // --- VERIFIED CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyARBwnkKCK5cu-YPro8dUQBjIwi6mjzjzQ",
             authDomain: "focus-by-alex-3e956.firebaseapp.com",
@@ -182,7 +181,7 @@
 
         const priorityMap = {
             '1': { label: 'LOW', css: 'text-blue-500 border-blue-500/20 bg-blue-500/5' },
-            '2': { label: 'MED', css: 'text-amber-500 border-amber-500/20 bg-amber-500/5' },
+            '2': { label: 'MEDIUM', css: 'text-amber-500 border-amber-500/20 bg-amber-500/5' },
             '3': { label: 'HIGH', css: 'text-rose-500 border-rose-500/20 bg-rose-500/5' }
         };
 
@@ -236,7 +235,7 @@
 
             filtered.forEach(task => {
                 const li = document.createElement('li');
-                li.className = `p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)] flex items-start justify-between transition-all hover:border-blue-500/30`;
+                li.className = `p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)] flex items-start justify-between transition-all`;
                 li.innerHTML = `
                     <div class="flex items-start gap-5">
                         <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${task.completed})" 
