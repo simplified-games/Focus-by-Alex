@@ -3,74 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus By Alex - Cloud Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Focus By Alex</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
     <style>
-        :root { --bg: #09090b; --card: rgba(255, 255, 255, 0.02); --text: #fafafa; --text-muted: #71717a; --border: rgba(255, 255, 255, 0.08); --input: #18181b; --accent: #3b82f6; }
-        .light-theme { --bg: #f8fafc; --card: rgba(255, 255, 255, 0.8); --text: #0f172a; --text-muted: #64748b; --border: rgba(0, 0, 0, 0.05); --input: #f1f5f9; --accent: #2563eb; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); transition: background-color 0.4s ease; }
-        .glass-card { background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(20px); }
-        .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
-        input, select { background-color: var(--input) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
-        #progressFill { transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Titles */
+        h1 { font-size: 1.8rem; color: #333; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.2rem; color: #666; font-weight: normal; margin-top: 0; }
+        
+        .description {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 2rem;
+            line-height: 1.4;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        #login-btn {
+            background-color: #4285F4;
+            color: white;
+            width: 100%;
+        }
+
+        #login-btn:hover { background-color: #357ae8; }
+
+        #logout-btn {
+            background-color: #ff4b2b;
+            color: white;
+            margin-top: 20px;
+        }
+
+        input {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .task-list { text-align: left; margin-top: 20px; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 md:p-12">
+<body>
 
-    <div class="w-full max-w-3xl glass-card rounded-[3rem] p-10 md:p-16">
-        
-        <header class="flex justify-between items-start mb-8">
-            <div>
-                <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                    Focus By Alex
-                </h1>
-                <div class="flex items-center gap-4 mt-4">
-                    <button id="authBtn" onclick="handleAuth()" class="text-xs font-bold uppercase tracking-widest text-blue-500 hover:underline">
-                        Sign In with Google
-                    </button>
-                    <span id="stats" class="text-sm font-semibold uppercase tracking-[0.2em] opacity-50">0 Tasks</span>
-                </div>
-            </div>
-            <button onclick="toggleTheme()" id="themeBtn" class="w-16 h-16 flex items-center justify-center rounded-3xl bg-[var(--input)] border border-[var(--border)] text-3xl">🌙</button>
-        </header>
-
-        <div class="mb-14">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-sm font-semibold text-blue-500 uppercase tracking-widest">Journey Progress</span>
-                <span id="progressPercent" class="text-sm font-extrabold text-blue-500">0%</span>
-            </div>
-            <div class="w-full h-2.5 bg-[var(--input)] rounded-full border border-[var(--border)] overflow-hidden">
-                <div id="progressFill" class="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600" style="width: 0%"></div>
-            </div>
-        </div>
-
-        <div id="mainUI" class="opacity-50 pointer-events-none transition-opacity">
-            <div class="flex flex-col md:flex-row gap-6 mb-12">
-                <input type="text" id="searchInput" oninput="render()" placeholder="Filter goals..." class="flex-1 px-8 py-6 rounded-[2rem] text-xl focus:outline-none">
-            </div>
-
-            <div class="p-10 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-14">
-                <input type="text" id="taskInput" placeholder="What is your focus?" class="w-full bg-transparent !border-0 !p-0 mb-8 text-3xl font-light focus:ring-0">
-                <div class="flex flex-col md:flex-row gap-5">
-                    <select id="priorityInput" class="md:w-1/3 px-6 py-4 rounded-2xl text-sm font-bold">
-                        <option value="1">Low</option>
-                        <option value="2">Medium</option>
-                        <option value="3">High</option>
-                    </select>
-                    <input type="date" id="dateInput" class="flex-1 px-6 py-4 rounded-2xl text-sm">
-                    <button onclick="addTask()" class="bg-blue-600 px-10 py-4 rounded-2xl text-white font-bold">Add</button>
-                </div>
-            </div>
-            <ul id="taskList" class="space-y-6"></ul>
-        </div>
+    <div id="landing-screen" class="container">
+        <h1>Focus By Alex</h1>
+        <h2>Stay on track.</h2>
+        <p class="description">
+            A minimalist workspace designed to help you organize tasks, 
+            track your goals, and reclaim your deep focus.
+        </p>
+        <button id="login-btn">Sign in with Google</button>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    <div id="main-app" class="container hidden">
+        <h1>My Tasks</h1>
+        <p id="welcome-msg"></p>
+        
+        <input type="text" id="taskInput" placeholder="Enter a new goal...">
+        <button onclick="addTask()" style="background: #28a745; color: white;">Add Goal</button>
 
+        <div class="task-list" id="taskList"></div>
+
+        <button id="logout-btn">Logout</button>
+    </div>
+
+    <script>
         
         const firebaseConfig = {
 
@@ -88,108 +117,60 @@
 
 };
 
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const provider = new firebase.auth.GoogleAuthProvider();
 
+        // Elements
+        const landingScreen = document.getElementById('landing-screen');
+        const mainApp = document.getElementById('main-app');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const taskList = document.getElementById('taskList');
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        let tasks = [];
-        let currentUser = null;
-
-        // AUTH LOGIC
-        window.handleAuth = () => {
-            if (currentUser) {
-                signOut(auth);
-            } else {
-                signInWithPopup(auth, provider);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            currentUser = user;
-            const ui = document.getElementById('mainUI');
-            const authBtn = document.getElementById('authBtn');
-            
+        // Logic to switch screens
+        auth.onAuthStateChanged(user => {
             if (user) {
-                ui.classList.remove('opacity-50', 'pointer-events-none');
-                authBtn.innerText = `Sign Out (${user.displayName.split(' ')[0]})`;
-                syncTasks(user.uid);
+                landingScreen.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                document.getElementById('welcome-msg').innerText = `Hello, ${user.displayName}`;
+                loadTasks(user.uid);
             } else {
-                ui.classList.add('opacity-50', 'pointer-events-none');
-                authBtn.innerText = "Sign In with Google";
-                tasks = [];
-                render();
+                landingScreen.classList.remove('hidden');
+                mainApp.classList.add('hidden');
             }
         });
 
-        // DATABASE SYNC
-        function syncTasks(uid) {
-            const q = query(collection(db, "tasks"), where("userId", "==", uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, (snapshot) => {
-                tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                render();
-            });
+        // Login / Logout
+        loginBtn.onclick = () => auth.signInWithPopup(provider);
+        logoutBtn.onclick = () => auth.signOut();
+
+        // Database Functions
+        function addTask() {
+            const user = auth.currentUser;
+            const task = document.getElementById('taskInput').value;
+            if (user && task) {
+                db.collection('tasks').add({
+                    uid: user.uid,
+                    text: task,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById('taskInput').value = '';
+            }
         }
 
-        window.addTask = async () => {
-            const text = document.getElementById('taskInput').value;
-            if (!text || !currentUser) return;
-            
-            await addDoc(collection(db, "tasks"), {
-                text,
-                priority: document.getElementById('priorityInput').value,
-                date: document.getElementById('dateInput').value,
-                completed: false,
-                createdAt: Date.now(),
-                userId: currentUser.uid
-            });
-            document.getElementById('taskInput').value = '';
-        };
-
-        window.toggleTask = async (id, currentStatus) => {
-            await updateDoc(doc(db, "tasks", id), { completed: !currentStatus });
-        };
-
-        window.deleteTask = async (id) => {
-            await deleteDoc(doc(db, "tasks", id));
-        };
-
-        // UI RENDERING
-        window.render = () => {
-            const list = document.getElementById('taskList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            list.innerHTML = '';
-
-            const filtered = tasks.filter(t => t.text.toLowerCase().includes(searchTerm));
-            
-            filtered.forEach(task => {
-                const li = document.createElement('li');
-                li.className = `flex items-center justify-between p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)]`;
-                li.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <input type="checkbox" ${task.completed ? 'checked' : ''} onclick="toggleTask('${task.id}', ${task.completed})" class="w-6 h-6">
-                        <span class="${task.completed ? 'task-done' : ''} font-medium">${task.text}</span>
-                    </div>
-                    <button onclick="deleteTask('${task.id}')" class="text-rose-500">✕</button>
-                `;
-                list.appendChild(li);
-            });
-
-            // Update Progress
-            const total = tasks.length;
-            const done = tasks.filter(t => t.completed).length;
-            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-            document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('progressPercent').innerText = percent + '%';
-            document.getElementById('stats').innerText = `${total - done} Remaining`;
-        };
-
-        window.toggleTheme = () => {
-            document.body.classList.toggle('light-theme');
-            document.getElementById('themeBtn').innerHTML = document.body.classList.contains('light-theme') ? '☀️' : '🌙';
-        };
+        function loadTasks(uid) {
+            db.collection('tasks').where('uid', '==', uid).orderBy('createdAt', 'desc')
+                .onSnapshot(snapshot => {
+                    taskList.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const p = document.createElement('p');
+                        p.innerText = "• " + doc.data().text;
+                        taskList.appendChild(p);
+                    });
+                });
+        }
     </script>
 </body>
 </html>
