@@ -21,18 +21,27 @@
             --input: #18181b;
         }
 
+        .light-theme {
+            --bg: #f8fafc;
+            --card: rgba(255, 255, 255, 0.8);
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: rgba(0, 0, 0, 0.05);
+            --input: #ffffff;
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg); 
             color: var(--text);
-            transition: background-color 0.4s ease;
+            transition: all 0.4s ease;
         }
 
         .glass-card { 
             background: var(--card); 
             border: 1px solid var(--border); 
             backdrop-filter: blur(20px);
-            box-shadow: 0 35px 70px -15px rgba(0,0,0,0.6);
+            box-shadow: 0 35px 70px -15px rgba(0,0,0,0.4);
         }
 
         input, select, textarea {
@@ -43,7 +52,34 @@
 
         .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
         
-        .btn-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        /* Custom Checkbox logic */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #3b82f6 !important;
+            border-color: #3b82f6 !important;
+        }
+
+        .custom-checkbox:checked::after {
+            content: "✓";
+            color: white;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        /* Perfect Scrollable Height */
+        #taskList {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+            scrollbar-gutter: stable;
+        }
 
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
@@ -51,55 +87,43 @@
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 md:p-12">
+<body class="min-h-screen flex items-center justify-center p-4 md:p-8">
 
-    <div id="landingScreen" class="w-full max-w-2xl glass-card rounded-[3.5rem] p-12 md:p-20 text-center">
-        <h1 class="text-6xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">
-            Focus By Alex
-        </h1>
-        <div class="text-[10px] font-bold uppercase tracking-[0.4em] opacity-30 mb-10">Premium Productivity</div>
-        <p class="text-[var(--text-muted)] text-lg mb-12 font-medium max-w-xs mx-auto">Master your day with the ultimate minimalist workspace.</p>
-        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-black transition-all btn-glow active:scale-95">
-            Sign in with Google
-        </button>
+    <div id="landingScreen" class="w-full max-w-2xl glass-card rounded-[3.5rem] p-12 text-center">
+        <h1 class="text-6xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">Focus By Alex</h1>
+        <p class="text-[var(--text-muted)] text-lg mb-10 font-medium">Log in to sync your productivity goals.</p>
+        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-black transition-all">Sign in with Google</button>
     </div>
 
-    <div id="mainApp" class="w-full max-w-3xl glass-card rounded-[3.5rem] p-8 md:p-14 hidden">
+    <div id="mainApp" class="w-full max-w-3xl glass-card rounded-[3.5rem] p-8 md:p-12 hidden">
         
-        <header class="flex justify-between items-start mb-10">
+        <header class="flex justify-between items-start mb-8">
             <div>
                 <h1 class="text-4xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">Focus By Alex</h1>
-                <div class="flex items-center gap-4 mt-4">
+                <div class="flex items-center gap-4 mt-3">
                     <div id="stats" class="text-[10px] font-bold uppercase tracking-widest opacity-40">0 Tasks Remaining</div>
-                    <button onclick="clearCompleted()" class="text-[10px] font-bold uppercase tracking-widest text-rose-500/60 hover:text-rose-400">✕ Clear Done</button>
+                    <button onclick="clearCompleted()" class="text-[10px] font-bold uppercase tracking-widest text-rose-500/80 hover:text-rose-400">✕ Clear Done</button>
                     <button onclick="logout()" class="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100">Logout</button>
                 </div>
             </div>
-            <div class="flex items-center gap-3 bg-[var(--input)] p-2 rounded-2xl border border-[var(--border)]">
-                <select id="sortControl" onchange="render()" class="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer">
-                    <option value="newest">Newest</option>
-                    <option value="priority">Priority</option>
-                    <option value="dueDate">Due Date</option>
-                </select>
-            </div>
+            <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-[var(--input)] border border-[var(--border)] text-xl transition-transform hover:scale-110">🌙</button>
         </header>
 
-        <div class="mb-10">
-            <div class="flex justify-between mb-2"><span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Journey Progress</span><span id="progressPercent" class="text-xs font-black text-blue-500">0%</span></div>
-            <div class="w-full h-1 bg-[var(--input)] rounded-full overflow-hidden border border-[var(--border)]">
-                <div id="progressFill" class="h-full bg-blue-600 transition-all duration-700" style="width: 0%"></div>
+        <div class="flex gap-4 mb-8">
+            <div class="relative flex-1">
+                <input type="text" id="searchInput" oninput="render()" placeholder="Search..." class="w-full pl-10 pr-4 py-3 rounded-2xl text-xs outline-none">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 text-xs">🔍</span>
             </div>
+            <select id="sortControl" onchange="render()" class="px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer">
+                <option value="newest">Newest First</option>
+                <option value="priority">By Priority</option>
+                <option value="dueDate">By Due Date</option>
+            </select>
         </div>
 
-        <div class="relative mb-8">
-            <input type="text" id="searchInput" oninput="render()" placeholder="Search goals..." 
-                class="w-full pl-12 pr-6 py-4 rounded-2xl text-sm border border-[var(--border)] focus:ring-1 focus:ring-blue-500/50 outline-none">
-            <span class="absolute left-5 top-1/2 -translate-y-1/2 opacity-20">🔍</span>
-        </div>
-
-        <div class="p-8 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-10">
-            <input type="text" id="taskInput" placeholder="Task Title..." class="w-full bg-transparent !border-0 !p-0 mb-4 text-2xl font-bold placeholder:opacity-20 focus:ring-0">
-            <textarea id="descInput" placeholder="Add a description/goal detail..." class="w-full bg-transparent !border-0 !p-0 mb-6 text-sm opacity-60 placeholder:opacity-20 focus:ring-0 resize-none h-12"></textarea>
+        <div class="p-8 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-8 shadow-inner">
+            <input type="text" id="taskInput" placeholder="New Goal Title..." class="w-full bg-transparent !border-0 !p-0 mb-2 text-xl font-bold focus:ring-0">
+            <textarea id="descInput" placeholder="Add details..." class="w-full bg-transparent !border-0 !p-0 mb-6 text-sm opacity-50 focus:ring-0 resize-none h-10"></textarea>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <select id="priorityInput" class="px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
@@ -108,14 +132,22 @@
                     <option value="3">High Priority</option>
                 </select>
                 <input type="date" id="dateInput" class="px-4 py-3 rounded-xl text-xs font-bold opacity-60">
-                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] btn-glow">Add Task</button>
+                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all active:scale-95">Add Goal</button>
             </div>
         </div>
 
-        <ul id="taskList" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"></ul>
+        <div class="mb-6 px-2">
+            <div class="flex justify-between mb-2"><span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Progress</span><span id="progressPercent" class="text-[9px] font-black text-blue-500">0%</span></div>
+            <div class="w-full h-1 bg-[var(--input)] rounded-full border border-[var(--border)] overflow-hidden">
+                <div id="progressFill" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <ul id="taskList" class="space-y-4"></ul>
     </div>
 
     <script>
+        // --- VERIFIED CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyARBwnkKCK5cu-YPro8dUQBjIwi6mjzjzQ",
             authDomain: "focus-by-alex-3e956.firebaseapp.com",
@@ -131,6 +163,7 @@
         const provider = new firebase.auth.GoogleAuthProvider();
 
         let tasks = [];
+        let isDark = true;
 
         auth.onAuthStateChanged(user => {
             document.getElementById('landingScreen').classList.toggle('hidden', !!user);
@@ -140,6 +173,18 @@
 
         function login() { auth.signInWithPopup(provider); }
         function logout() { auth.signOut(); }
+
+        function toggleTheme() {
+            isDark = !isDark;
+            document.body.classList.toggle('light-theme');
+            document.getElementById('themeBtn').innerHTML = isDark ? '🌙' : '☀️';
+        }
+
+        const priorityMap = {
+            '1': { label: 'LOW', css: 'text-blue-500 border-blue-500/20 bg-blue-500/5' },
+            '2': { label: 'MED', css: 'text-amber-500 border-amber-500/20 bg-amber-500/5' },
+            '3': { label: 'HIGH', css: 'text-rose-500 border-rose-500/20 bg-rose-500/5' }
+        };
 
         function addTask() {
             const user = auth.currentUser;
@@ -168,7 +213,7 @@
         }
 
         function clearCompleted() {
-            if(!confirm("Clear all finished goals?")) return;
+            if(!confirm("Clear finished goals?")) return;
             tasks.filter(t => t.completed).forEach(t => db.collection('tasks').doc(t.id).delete());
         }
 
@@ -185,29 +230,27 @@
 
             filtered.sort((a, b) => {
                 if (sortBy === 'priority') return b.priority - a.priority;
-                if (sortBy === 'dueDate') return new Date(a.date || '9999') - new Date(b.date || '9999');
+                if (sortBy === 'dueDate') return new Date(a.date || '9999-12-31') - new Date(b.date || '9999-12-31');
                 return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
             });
 
             filtered.forEach(task => {
                 const li = document.createElement('li');
-                li.className = `p-6 rounded-[2rem] border border-[var(--border)] bg-[var(--card)] transition-all mb-4`;
+                li.className = `p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)] flex items-start justify-between transition-all hover:border-blue-500/30`;
                 li.innerHTML = `
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-start gap-4">
-                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${task.completed})" 
-                                class="w-6 h-6 mt-1 rounded-lg border-2 border-[var(--border)] bg-[var(--input)] appearance-none checked:bg-blue-600 transition-all cursor-pointer">
-                            <div>
-                                <p class="text-lg font-bold ${task.completed ? 'task-done' : ''}">${task.text}</p>
-                                ${task.description ? `<p class="text-xs opacity-40 mt-1 max-w-sm">${task.description}</p>` : ''}
-                                <div class="flex items-center gap-3 mt-3">
-                                    <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded border border-blue-500/20 text-blue-500 bg-blue-500/5">P${task.priority}</span>
-                                    ${task.date ? `<span class="text-[9px] opacity-30 font-bold">📅 ${task.date}</span>` : ''}
-                                </div>
+                    <div class="flex items-start gap-5">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${task.completed})" 
+                            class="custom-checkbox w-6 h-6 mt-1 rounded-lg border-2 border-[var(--border)] bg-[var(--input)] cursor-pointer transition-all">
+                        <div>
+                            <p class="text-lg font-bold ${task.completed ? 'task-done' : ''}">${task.text}</p>
+                            ${task.description ? `<p class="text-[11px] opacity-40 mt-1 max-w-xs">${task.description}</p>` : ''}
+                            <div class="flex items-center gap-3 mt-3">
+                                <span class="text-[8px] font-black px-2 py-0.5 rounded border ${priorityMap[task.priority].css}">${priorityMap[task.priority].label}</span>
+                                ${task.date ? `<span class="text-[9px] opacity-30 font-bold">📅 ${task.date}</span>` : ''}
                             </div>
                         </div>
-                        <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-xl">✕</button>
                     </div>
+                    <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-lg p-2 transition-colors">✕</button>
                 `;
                 list.appendChild(li);
             });
