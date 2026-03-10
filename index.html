@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus By Alex - Pro Edition</title>
+    <title>Focus By Alex - Ultimate Edition</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #09090b;
@@ -19,24 +19,13 @@
             --text-muted: #71717a;
             --border: rgba(255, 255, 255, 0.08);
             --input: #18181b;
-            --accent: #3b82f6;
-        }
-
-        .light-theme {
-            --bg: #f8fafc;
-            --card: rgba(255, 255, 255, 0.8);
-            --text: #0f172a;
-            --text-muted: #64748b;
-            --border: rgba(0, 0, 0, 0.05);
-            --input: #f1f5f9;
-            --accent: #2563eb;
         }
 
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg); 
             color: var(--text);
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: background-color 0.4s ease;
         }
 
         .glass-card { 
@@ -46,7 +35,7 @@
             box-shadow: 0 35px 70px -15px rgba(0,0,0,0.6);
         }
 
-        input, select {
+        input, select, textarea {
             background-color: var(--input) !important;
             color: var(--text) !important;
             border: 1px solid var(--border) !important;
@@ -54,81 +43,72 @@
 
         .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
         
-        #progressFill {
-            transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1);
-        }
+        .btn-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         .hidden { display: none !important; }
-
-        /* Custom shadow for the primary button to match your screenshot */
-        .btn-glow {
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 md:p-12">
 
-    <div id="landingScreen" class="w-full max-w-2xl glass-card rounded-[3rem] p-12 md:p-20 text-center">
-        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">
+    <div id="landingScreen" class="w-full max-w-2xl glass-card rounded-[3.5rem] p-12 md:p-20 text-center">
+        <h1 class="text-6xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">
             Focus By Alex
         </h1>
-        <div class="text-xs font-semibold uppercase tracking-[0.3em] opacity-40 mb-8">
-            Stay on track
-        </div>
-        
-        <p class="text-[var(--text-muted)] text-lg mb-12 leading-relaxed max-w-sm mx-auto font-medium">
-            A workspace designed to help you organise goals and reclaim productivity.
-        </p>
-        
-        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-extrabold transition-all active:scale-[0.98] btn-glow">
+        <div class="text-[10px] font-bold uppercase tracking-[0.4em] opacity-30 mb-10">Premium Productivity</div>
+        <p class="text-[var(--text-muted)] text-lg mb-12 font-medium max-w-xs mx-auto">Master your day with the ultimate minimalist workspace.</p>
+        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-black transition-all btn-glow active:scale-95">
             Sign in with Google
         </button>
     </div>
 
-    <div id="mainApp" class="w-full max-w-3xl glass-card rounded-[3rem] p-10 md:p-16 hidden">
-        <header class="flex justify-between items-start mb-8">
+    <div id="mainApp" class="w-full max-w-3xl glass-card rounded-[3.5rem] p-8 md:p-14 hidden">
+        
+        <header class="flex justify-between items-start mb-10">
             <div>
-                <h1 class="text-4xl font-extrabold tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                    Focus By Alex
-                </h1>
-                <div class="flex items-center gap-6 mt-4">
-                    <div id="stats" class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40">
-                        0 Tasks Remaining
-                    </div>
-                    <button onclick="logout()" class="text-[10px] font-bold uppercase tracking-widest text-rose-500/60 hover:text-rose-400 transition-colors">
-                        ✕ Logout
-                    </button>
+                <h1 class="text-4xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">Focus By Alex</h1>
+                <div class="flex items-center gap-4 mt-4">
+                    <div id="stats" class="text-[10px] font-bold uppercase tracking-widest opacity-40">0 Tasks Remaining</div>
+                    <button onclick="clearCompleted()" class="text-[10px] font-bold uppercase tracking-widest text-rose-500/60 hover:text-rose-400">✕ Clear Done</button>
+                    <button onclick="logout()" class="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100">Logout</button>
                 </div>
             </div>
-            <button onclick="toggleTheme()" id="themeBtn" class="w-14 h-14 flex items-center justify-center rounded-2xl bg-[var(--input)] border border-[var(--border)] hover:scale-105 transition-all text-2xl">
-                🌙
-            </button>
+            <div class="flex items-center gap-3 bg-[var(--input)] p-2 rounded-2xl border border-[var(--border)]">
+                <select id="sortControl" onchange="render()" class="bg-transparent border-none text-[10px] font-black uppercase tracking-widest focus:ring-0 cursor-pointer">
+                    <option value="newest">Newest</option>
+                    <option value="priority">Priority</option>
+                    <option value="dueDate">Due Date</option>
+                </select>
+            </div>
         </header>
 
-        <div class="mb-14">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Journey Progress</span>
-                <span id="progressPercent" class="text-sm font-black text-blue-500">0%</span>
-            </div>
-            <div class="w-full h-1.5 bg-[var(--input)] rounded-full border border-[var(--border)] overflow-hidden">
-                <div id="progressFill" class="h-full bg-gradient-to-r from-blue-600 to-purple-600" style="width: 0%"></div>
+        <div class="mb-10">
+            <div class="flex justify-between mb-2"><span class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Journey Progress</span><span id="progressPercent" class="text-xs font-black text-blue-500">0%</span></div>
+            <div class="w-full h-1 bg-[var(--input)] rounded-full overflow-hidden border border-[var(--border)]">
+                <div id="progressFill" class="h-full bg-blue-600 transition-all duration-700" style="width: 0%"></div>
             </div>
         </div>
 
-        <div class="p-10 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-10">
-            <input type="text" id="taskInput" placeholder="What is your main focus today?" 
-                class="w-full bg-transparent !border-0 !p-0 mb-8 text-2xl font-light placeholder:opacity-20 focus:ring-0">
+        <div class="relative mb-8">
+            <input type="text" id="searchInput" oninput="render()" placeholder="Search goals..." 
+                class="w-full pl-12 pr-6 py-4 rounded-2xl text-sm border border-[var(--border)] focus:ring-1 focus:ring-blue-500/50 outline-none">
+            <span class="absolute left-5 top-1/2 -translate-y-1/2 opacity-20">🔍</span>
+        </div>
+
+        <div class="p-8 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-10">
+            <input type="text" id="taskInput" placeholder="Task Title..." class="w-full bg-transparent !border-0 !p-0 mb-4 text-2xl font-bold placeholder:opacity-20 focus:ring-0">
+            <textarea id="descInput" placeholder="Add a description/goal detail..." class="w-full bg-transparent !border-0 !p-0 mb-6 text-sm opacity-60 placeholder:opacity-20 focus:ring-0 resize-none h-12"></textarea>
             
-            <div class="flex flex-col md:flex-row gap-4">
-                <select id="priorityInput" class="px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-widest focus:outline-none cursor-pointer">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select id="priorityInput" class="px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
                     <option value="1">Low Priority</option>
                     <option value="2">Medium Priority</option>
                     <option value="3">High Priority</option>
                 </select>
-                <input type="date" id="dateInput" class="px-6 py-4 rounded-xl text-sm font-medium focus:outline-none opacity-60">
-                <button onclick="addTask()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black uppercase tracking-widest transition-all btn-glow">
-                    Add Task
-                </button>
+                <input type="date" id="dateInput" class="px-4 py-3 rounded-xl text-xs font-bold opacity-60">
+                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] btn-glow">Add Task</button>
             </div>
         </div>
 
@@ -151,101 +131,92 @@
         const provider = new firebase.auth.GoogleAuthProvider();
 
         let tasks = [];
-        let isDark = true;
 
         auth.onAuthStateChanged(user => {
-            const landing = document.getElementById('landingScreen');
-            const app = document.getElementById('mainApp');
-            if (user) {
-                landing.classList.add('hidden');
-                app.classList.remove('hidden');
-                loadTasks(user.uid);
-            } else {
-                landing.classList.remove('hidden');
-                app.classList.add('hidden');
-            }
+            document.getElementById('landingScreen').classList.toggle('hidden', !!user);
+            document.getElementById('mainApp').classList.toggle('hidden', !user);
+            if (user) loadTasks(user.uid);
         });
 
         function login() { auth.signInWithPopup(provider); }
         function logout() { auth.signOut(); }
 
-        function toggleTheme() {
-            isDark = !isDark;
-            document.body.classList.toggle('light-theme');
-            document.getElementById('themeBtn').innerHTML = isDark ? '🌙' : '☀️';
-        }
-
-        const priorityMap = {
-            '1': { label: 'Low', color: 'text-blue-500 border-blue-500/20 bg-blue-500/5' },
-            '2': { label: 'Medium', color: 'text-amber-500 border-amber-500/20 bg-amber-500/5' },
-            '3': { label: 'High', color: 'text-rose-500 border-rose-500/20 bg-rose-500/5' }
-        };
-
         function addTask() {
             const user = auth.currentUser;
-            const input = document.getElementById('taskInput');
-            if (!user || !input.value.trim()) return;
+            const title = document.getElementById('taskInput').value;
+            const desc = document.getElementById('descInput').value;
+            if (!user || !title.trim()) return;
 
             db.collection('tasks').add({
                 uid: user.uid,
-                text: input.value,
+                text: title,
+                description: desc,
                 priority: document.getElementById('priorityInput').value,
                 date: document.getElementById('dateInput').value,
                 completed: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            input.value = '';
+            document.getElementById('taskInput').value = '';
+            document.getElementById('descInput').value = '';
         }
 
         function loadTasks(uid) {
-            db.collection('tasks').where('uid', '==', uid).orderBy('createdAt', 'desc')
-                .onSnapshot(snapshot => {
-                    tasks = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                    render();
-                });
+            db.collection('tasks').where('uid', '==', uid).onSnapshot(snapshot => {
+                tasks = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                render();
+            });
         }
 
-        function toggleTask(id, currentStatus) {
-            db.collection('tasks').doc(id).update({ completed: !currentStatus });
+        function clearCompleted() {
+            if(!confirm("Clear all finished goals?")) return;
+            tasks.filter(t => t.completed).forEach(t => db.collection('tasks').doc(t.id).delete());
         }
 
-        function deleteTask(id) {
-            db.collection('tasks').doc(id).delete();
-        }
+        function toggleTask(id, currentStatus) { db.collection('tasks').doc(id).update({ completed: !currentStatus }); }
+        function deleteTask(id) { db.collection('tasks').doc(id).delete(); }
 
         function render() {
             const list = document.getElementById('taskList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const sortBy = document.getElementById('sortControl').value;
             list.innerHTML = '';
-            let completedCount = 0;
+            
+            let filtered = tasks.filter(t => t.text.toLowerCase().includes(search));
 
-            tasks.forEach(task => {
-                if(task.completed) completedCount++;
+            filtered.sort((a, b) => {
+                if (sortBy === 'priority') return b.priority - a.priority;
+                if (sortBy === 'dueDate') return new Date(a.date || '9999') - new Date(b.date || '9999');
+                return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+            });
+
+            filtered.forEach(task => {
                 const li = document.createElement('li');
-                li.className = `flex items-center justify-between p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)] transition-all`;
+                li.className = `p-6 rounded-[2rem] border border-[var(--border)] bg-[var(--card)] transition-all mb-4`;
                 li.innerHTML = `
-                    <div class="flex items-center gap-6">
-                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${task.completed})" 
-                            class="w-6 h-6 rounded-lg border-2 border-[var(--border)] bg-[var(--input)] cursor-pointer appearance-none checked:bg-blue-600 checked:border-blue-600 transition-all">
-                        <div>
-                            <p class="text-lg font-medium ${task.completed ? 'task-done' : ''}">${task.text}</p>
-                            <div class="flex items-center gap-4 mt-2">
-                                <span class="text-[9px] uppercase px-2 py-1 rounded border font-black ${priorityMap[task.priority].color}">
-                                    ${priorityMap[task.priority].label}
-                                </span>
-                                ${task.date ? `<span class="text-[10px] opacity-30 font-bold">📅 ${task.date}</span>` : ''}
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-4">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${task.completed})" 
+                                class="w-6 h-6 mt-1 rounded-lg border-2 border-[var(--border)] bg-[var(--input)] appearance-none checked:bg-blue-600 transition-all cursor-pointer">
+                            <div>
+                                <p class="text-lg font-bold ${task.completed ? 'task-done' : ''}">${task.text}</p>
+                                ${task.description ? `<p class="text-xs opacity-40 mt-1 max-w-sm">${task.description}</p>` : ''}
+                                <div class="flex items-center gap-3 mt-3">
+                                    <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded border border-blue-500/20 text-blue-500 bg-blue-500/5">P${task.priority}</span>
+                                    ${task.date ? `<span class="text-[9px] opacity-30 font-bold">📅 ${task.date}</span>` : ''}
+                                </div>
                             </div>
                         </div>
+                        <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-xl">✕</button>
                     </div>
-                    <button onclick="deleteTask('${task.id}')" class="text-rose-500/40 hover:text-rose-500 p-2 transition-colors">✕</button>
                 `;
                 list.appendChild(li);
             });
 
-            const total = tasks.length;
-            const percentage = total === 0 ? 0 : Math.round((completedCount / total) * 100);
-            document.getElementById('progressFill').style.width = percentage + '%';
-            document.getElementById('progressPercent').innerText = percentage + '%';
-            document.getElementById('stats').innerText = `${total - completedCount} Tasks Remaining`;
+            const completed = tasks.filter(t => t.completed).length;
+            const percent = tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100);
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressPercent').innerText = percent + '%';
+            document.getElementById('stats').innerText = `${tasks.length - completed} Tasks Remaining`;
         }
     </script>
 </body>
