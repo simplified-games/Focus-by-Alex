@@ -3,63 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus By Alex - Pro Edition</title>
+    <title>Focus By Alex - Cloud Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #09090b;
-            --card: rgba(255, 255, 255, 0.02);
-            --text: #fafafa;
-            --text-muted: #71717a;
-            --border: rgba(255, 255, 255, 0.08);
-            --input: #18181b;
-            --accent: #3b82f6;
-        }
-
-        .light-theme {
-            --bg: #f8fafc;
-            --card: rgba(255, 255, 255, 0.8);
-            --text: #0f172a;
-            --text-muted: #64748b;
-            --border: rgba(0, 0, 0, 0.05);
-            --input: #f1f5f9;
-            --accent: #2563eb;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text);
-            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .glass-card { 
-            background: var(--card); 
-            border: 1px solid var(--border); 
-            backdrop-filter: blur(20px);
-            box-shadow: 0 35px 70px -15px rgba(0,0,0,0.6);
-        }
-
-        .light-theme .glass-card {
-            box-shadow: 0 35px 70px -15px rgba(0,0,0,0.08);
-        }
-
-        input, select {
-            background-color: var(--input) !important;
-            color: var(--text) !important;
-            border: 1px solid var(--border) !important;
-        }
-
+        :root { --bg: #09090b; --card: rgba(255, 255, 255, 0.02); --text: #fafafa; --text-muted: #71717a; --border: rgba(255, 255, 255, 0.08); --input: #18181b; --accent: #3b82f6; }
+        .light-theme { --bg: #f8fafc; --card: rgba(255, 255, 255, 0.8); --text: #0f172a; --text-muted: #64748b; --border: rgba(0, 0, 0, 0.05); --input: #f1f5f9; --accent: #2563eb; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); transition: background-color 0.4s ease; }
+        .glass-card { background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(20px); }
         .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
-        
-        #progressFill {
-            transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1);
-        }
-
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+        input, select { background-color: var(--input) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+        #progressFill { transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4 md:p-12">
@@ -71,18 +25,14 @@
                 <h1 class="text-5xl font-extrabold tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
                     Focus By Alex
                 </h1>
-                <div class="flex items-center gap-6 mt-4">
-                    <div id="stats" class="text-sm font-semibold uppercase tracking-[0.2em] opacity-50">
-                        0 Tasks Remaining
-                    </div>
-                    <button id="clearBtn" onclick="clearCompleted()" class="hidden text-xs font-bold uppercase tracking-widest text-rose-500 hover:text-rose-400 transition-colors">
-                        ✕ Clear Completed
+                <div class="flex items-center gap-4 mt-4">
+                    <button id="authBtn" onclick="handleAuth()" class="text-xs font-bold uppercase tracking-widest text-blue-500 hover:underline">
+                        Sign In with Google
                     </button>
+                    <span id="stats" class="text-sm font-semibold uppercase tracking-[0.2em] opacity-50">0 Tasks</span>
                 </div>
             </div>
-            <button onclick="toggleTheme()" id="themeBtn" class="w-16 h-16 flex items-center justify-center rounded-3xl bg-[var(--input)] border border-[var(--border)] hover:scale-105 active:scale-95 transition-all text-3xl shadow-2xl">
-                🌙
-            </button>
+            <button onclick="toggleTheme()" id="themeBtn" class="w-16 h-16 flex items-center justify-center rounded-3xl bg-[var(--input)] border border-[var(--border)] text-3xl">🌙</button>
         </header>
 
         <div class="mb-14">
@@ -91,169 +41,155 @@
                 <span id="progressPercent" class="text-sm font-extrabold text-blue-500">0%</span>
             </div>
             <div class="w-full h-2.5 bg-[var(--input)] rounded-full border border-[var(--border)] overflow-hidden">
-                <div id="progressFill" class="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 shadow-[0_0_20px_rgba(59,130,246,0.3)]" style="width: 0%"></div>
+                <div id="progressFill" class="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600" style="width: 0%"></div>
             </div>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-6 mb-12">
-            <div class="relative flex-1">
-                <span class="absolute left-7 top-1/2 -translate-y-1/2 opacity-40 text-2xl">🔍</span>
-                <input type="text" id="searchInput" oninput="render()" placeholder="Filter goals..." 
-                    class="w-full pl-20 pr-10 py-6 rounded-[2rem] text-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all shadow-inner">
+        <div id="mainUI" class="opacity-50 pointer-events-none transition-opacity">
+            <div class="flex flex-col md:flex-row gap-6 mb-12">
+                <input type="text" id="searchInput" oninput="render()" placeholder="Filter goals..." class="flex-1 px-8 py-6 rounded-[2rem] text-xl focus:outline-none">
             </div>
-            <div class="flex items-center gap-4 bg-[var(--input)] px-8 rounded-[2rem] border border-[var(--border)] shadow-inner">
-                <span class="text-xs font-semibold uppercase opacity-30 whitespace-nowrap">Sort</span>
-                <select id="sortControl" onchange="render()" class="bg-transparent !border-0 py-6 text-base font-semibold focus:outline-none cursor-pointer">
-                    <option value="newest">Newest First</option>
-                    <option value="priority">By Priority</option>
-                    <option value="dueDate">By Due Date</option>
-                </select>
-            </div>
-        </div>
 
-        <div class="p-10 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-14 shadow-inner">
-            <input type="text" id="taskInput" placeholder="What is your main focus today?" 
-                class="w-full bg-transparent !border-0 !p-0 mb-8 text-3xl font-light placeholder:opacity-30 focus:ring-0">
-            
-            <div class="flex flex-col gap-5">
+            <div class="p-10 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-14">
+                <input type="text" id="taskInput" placeholder="What is your focus?" class="w-full bg-transparent !border-0 !p-0 mb-8 text-3xl font-light focus:ring-0">
                 <div class="flex flex-col md:flex-row gap-5">
-                    <select id="priorityInput" class="w-full md:w-1/3 px-6 py-4 rounded-2xl text-sm font-bold focus:outline-none cursor-pointer">
-                        <option value="1">Low Priority</option>
-                        <option value="2">Medium Priority</option>
-                        <option value="3">High Priority</option>
+                    <select id="priorityInput" class="md:w-1/3 px-6 py-4 rounded-2xl text-sm font-bold">
+                        <option value="1">Low</option>
+                        <option value="2">Medium</option>
+                        <option value="3">High</option>
                     </select>
-                    <input type="date" id="dateInput" class="w-full md:flex-1 px-6 py-4 rounded-2xl text-sm font-medium focus:outline-none">
+                    <input type="date" id="dateInput" class="flex-1 px-6 py-4 rounded-2xl text-sm">
+                    <button onclick="addTask()" class="bg-blue-600 px-10 py-4 rounded-2xl text-white font-bold">Add</button>
                 </div>
-                
-                <button onclick="addTask()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-lg font-extrabold transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]">
-                    Add Task
-                </button>
             </div>
+            <ul id="taskList" class="space-y-6"></ul>
         </div>
-
-        <ul id="taskList" class="space-y-6 max-h-[600px] overflow-y-auto pr-4"></ul>
     </div>
 
-    <script>
-        let tasks = JSON.parse(localStorage.getItem('alexTasks_v7')) || [];
-        let isDark = true;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, updateDoc, deleteDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        function toggleTheme() {
-            isDark = !isDark;
-            document.body.classList.toggle('light-theme');
-            document.getElementById('themeBtn').innerHTML = isDark ? '🌙' : '☀️';
-        }
+        
+        const firebaseConfig = {
 
-        const priorityMap = {
-            '1': { label: 'Low', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-            '2': { label: 'Medium', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-            '3': { label: 'High', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20' }
+  apiKey: "AIzaSyARBwnkKCK5cu-YPro8dUQBjIwi6mjzjzQ",
+
+  authDomain: "focus-by-alex-3e956.firebaseapp.com",
+
+  projectId: "focus-by-alex-3e956",
+
+  storageBucket: "focus-by-alex-3e956.firebasestorage.app",
+
+  messagingSenderId: "1073410411692",
+
+  appId: "1:1073410411692:web:5aa2f0d1e89b24985de309"
+
+};
+
+
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        let tasks = [];
+        let currentUser = null;
+
+        // AUTH LOGIC
+        window.handleAuth = () => {
+            if (currentUser) {
+                signOut(auth);
+            } else {
+                signInWithPopup(auth, provider);
+            }
         };
 
-        function updateProgress() {
-            const total = tasks.length;
-            const completed = tasks.filter(t => t.completed).length;
-            const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            const ui = document.getElementById('mainUI');
+            const authBtn = document.getElementById('authBtn');
             
-            document.getElementById('progressFill').style.width = percentage + '%';
-            document.getElementById('progressPercent').innerText = percentage + '%';
+            if (user) {
+                ui.classList.remove('opacity-50', 'pointer-events-none');
+                authBtn.innerText = `Sign Out (${user.displayName.split(' ')[0]})`;
+                syncTasks(user.uid);
+            } else {
+                ui.classList.add('opacity-50', 'pointer-events-none');
+                authBtn.innerText = "Sign In with Google";
+                tasks = [];
+                render();
+            }
+        });
+
+        // DATABASE SYNC
+        function syncTasks(uid) {
+            const q = query(collection(db, "tasks"), where("userId", "==", uid), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snapshot) => {
+                tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            });
         }
 
-        function render() {
-            const list = document.getElementById('taskList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const sortBy = document.getElementById('sortControl').value;
-            const stats = document.getElementById('stats');
-            const clearBtn = document.getElementById('clearBtn');
+        window.addTask = async () => {
+            const text = document.getElementById('taskInput').value;
+            if (!text || !currentUser) return;
             
-            list.innerHTML = '';
-            
-            let filtered = tasks.filter(t => t.text.toLowerCase().includes(searchTerm));
-
-            filtered.sort((a, b) => {
-                if (sortBy === 'priority') return b.priority - a.priority;
-                if (sortBy === 'dueDate') {
-                    if (!a.date && !b.date) return 0;
-                    if (!a.date) return 1;
-                    if (!b.date) return -1;
-                    return new Date(a.date) - new Date(b.date);
-                }
-                return b.createdAt - a.createdAt;
-            });
-            
-            const remaining = tasks.filter(t => !t.completed).length;
-            const completedCount = tasks.length - remaining;
-            
-            stats.innerText = `${remaining} ${remaining === 1 ? 'Task' : 'Tasks'} Remaining`;
-            clearBtn.classList.toggle('hidden', completedCount === 0);
-
-            updateProgress();
-
-            filtered.forEach((task) => {
-                const actualIndex = tasks.indexOf(task);
-                const li = document.createElement('li');
-                li.className = `group flex items-center justify-between p-8 rounded-[2rem] border border-[var(--border)] bg-[var(--card)] transition-all hover:scale-[1.01] hover:border-blue-500/20`;
-                
-                li.innerHTML = `
-                    <div class="flex items-start gap-8">
-                        <div class="relative flex items-center justify-center mt-1.5">
-                             <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${actualIndex})" 
-                                class="w-8 h-8 rounded-xl border-2 border-[var(--border)] bg-[var(--input)] text-blue-600 focus:ring-offset-0 focus:ring-blue-500 cursor-pointer appearance-none checked:bg-blue-600 checked:border-blue-600 transition-all">
-                             <span class="absolute pointer-events-none text-white text-base ${task.completed ? 'block' : 'hidden'}">✓</span>
-                        </div>
-                        <div>
-                            <p class="text-xl font-semibold tracking-tight transition-all ${task.completed ? 'task-done' : ''}">${task.text}</p>
-                            <div class="flex items-center gap-5 mt-4">
-                                <span class="text-[11px] uppercase tracking-[0.2em] px-4 py-1.5 rounded-lg border-2 font-extrabold ${priorityMap[task.priority].color}">
-                                    ${priorityMap[task.priority].label}
-                                </span>
-                                ${task.date ? `<span class="text-sm opacity-40 font-bold flex items-center gap-2">📅 ${task.date}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <button onclick="deleteTask(${actualIndex})" class="text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-4 hover:bg-rose-500/10 rounded-2xl text-2xl">
-                        ✕
-                    </button>
-                `;
-                list.appendChild(li);
-            });
-            localStorage.setItem('alexTasks_v7', JSON.stringify(tasks));
-        }
-
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            if (!input.value.trim()) return;
-
-            tasks.push({
-                text: input.value,
+            await addDoc(collection(db, "tasks"), {
+                text,
                 priority: document.getElementById('priorityInput').value,
                 date: document.getElementById('dateInput').value,
                 completed: false,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                userId: currentUser.uid
+            });
+            document.getElementById('taskInput').value = '';
+        };
+
+        window.toggleTask = async (id, currentStatus) => {
+            await updateDoc(doc(db, "tasks", id), { completed: !currentStatus });
+        };
+
+        window.deleteTask = async (id) => {
+            await deleteDoc(doc(db, "tasks", id));
+        };
+
+        // UI RENDERING
+        window.render = () => {
+            const list = document.getElementById('taskList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            list.innerHTML = '';
+
+            const filtered = tasks.filter(t => t.text.toLowerCase().includes(searchTerm));
+            
+            filtered.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `flex items-center justify-between p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)]`;
+                li.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onclick="toggleTask('${task.id}', ${task.completed})" class="w-6 h-6">
+                        <span class="${task.completed ? 'task-done' : ''} font-medium">${task.text}</span>
+                    </div>
+                    <button onclick="deleteTask('${task.id}')" class="text-rose-500">✕</button>
+                `;
+                list.appendChild(li);
             });
 
-            input.value = '';
-            render();
-        }
+            // Update Progress
+            const total = tasks.length;
+            const done = tasks.filter(t => t.completed).length;
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressPercent').innerText = percent + '%';
+            document.getElementById('stats').innerText = `${total - done} Remaining`;
+        };
 
-        function toggleTask(index) {
-            tasks[index].completed = !tasks[index].completed;
-            render();
-        }
-
-        function deleteTask(index) {
-            tasks.splice(index, 1);
-            render();
-        }
-
-        function clearCompleted() {
-            if (confirm("Permanently delete all completed tasks?")) {
-                tasks = tasks.filter(t => !t.completed);
-                render();
-            }
-        }
-
-        render();
+        window.toggleTheme = () => {
+            document.body.classList.toggle('light-theme');
+            document.getElementById('themeBtn').innerHTML = document.body.classList.contains('light-theme') ? '☀️' : '🌙';
+        };
     </script>
 </body>
 </html>
