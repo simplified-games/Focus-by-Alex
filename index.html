@@ -4,60 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus - Task Tracker</title>
-    
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --bg: #09090b;
-            --card: rgba(255, 255, 255, 0.02);
+            --card: rgba(255,255,255,0.02);
             --text: #fafafa;
             --text-muted: #71717a;
-            --border: rgba(255, 255, 255, 0.08);
+            --border: rgba(255,255,255,0.08);
             --input: #121212;
+            --surface: #141414;
         }
-
         .light-theme {
-            --bg: #f8fafc;
-            --card: rgba(255, 255, 255, 0.8);
+            --bg: #f0f4ff;
+            --card: rgba(255,255,255,0.85);
             --text: #0f172a;
             --text-muted: #64748b;
-            --border: rgba(0, 0, 0, 0.05);
+            --border: rgba(0,0,0,0.06);
             --input: #ffffff;
+            --surface: #f8faff;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg); 
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
             color: var(--text);
-            transition: all 0.4s ease;
+            transition: background-color 0.4s, color 0.3s;
+            min-height: 100vh;
         }
 
-        .glass-card { 
-            background: var(--card); 
-            border: 1px solid var(--border); 
-            backdrop-filter: blur(20px);
-            box-shadow: 0 35px 70px -15px rgba(0,0,0,0.4);
+        /* Background ambient glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: -10%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(37,99,235,0.07) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -20%;
+            right: -10%;
+            width: 50%;
+            height: 50%;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 40px 80px -20px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 1;
         }
 
         input, select, textarea {
             background-color: var(--input) !important;
             color: var(--text) !important;
             border: 1px solid var(--border) !important;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: rgba(37,99,235,0.4) !important;
         }
 
-        .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
-        
-        /* Custom Checkbox Ticking */
+        /* ── Custom Checkbox ── */
         .custom-checkbox {
             appearance: none;
+            -webkit-appearance: none;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            flex-shrink: 0;
         }
         .custom-checkbox:checked {
             background-color: #3b82f6 !important;
@@ -66,44 +104,274 @@
         .custom-checkbox:checked::after {
             content: "✓";
             color: white;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 900;
         }
-
-        /* Scrollable List Area */
-        #taskList {
-            max-height: 450px;
-            overflow-y: auto;
-            padding-right: 8px;
+        .custom-checkbox:hover:not(:checked) {
+            border-color: rgba(59,130,246,0.5) !important;
         }
 
-        ::-webkit-scrollbar { width: 6px; }
+        .task-done { text-decoration: line-through; opacity: 0.3; filter: grayscale(1); }
+
+        /* ── Task List Scroll ── */
+        #taskListWrap {
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         .hidden { display: none !important; }
 
-        .btn-glow {
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+        /* ── Buttons ── */
+        .btn-glow { box-shadow: 0 10px 25px -5px rgba(37,99,235,0.35); }
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: var(--input);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
+        .btn-icon:hover { border-color: rgba(59,130,246,0.4); }
+        .btn-icon.active { background: rgba(37,99,235,0.15); border-color: rgba(37,99,235,0.4); }
+
+        /* ── Lists Tab Bar ── */
+        #listTabBar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+        #listTabBar::-webkit-scrollbar { display: none; }
+
+        .list-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all 0.2s;
+            color: var(--text-muted);
+        }
+        .list-tab:hover { border-color: rgba(59,130,246,0.4); color: var(--text); }
+        .list-tab.active {
+            background: rgba(37,99,235,0.12);
+            border-color: rgba(37,99,235,0.5);
+            color: #60a5fa;
+        }
+        .list-tab .list-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .list-tab .del-list {
+            margin-left: 2px;
+            opacity: 0;
+            font-size: 9px;
+            color: #f43f5e;
+            transition: opacity 0.15s;
+            cursor: pointer;
+            padding: 0 2px;
+        }
+        .list-tab:hover .del-list { opacity: 1; }
+
+        .list-add-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 12px;
+            border-radius: 50px;
+            border: 1px dashed var(--border);
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 800;
+            color: var(--text-muted);
+            background: transparent;
+            transition: all 0.2s;
+        }
+        .list-add-btn:hover { border-color: rgba(59,130,246,0.4); color: #60a5fa; }
+
+        /* ── Due Today Section ── */
+        #dueTodaySection {
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(139,92,246,0.06) 100%);
+            border: 1px solid rgba(37,99,235,0.2);
+            overflow: hidden;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+        #dueTodayHeader {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+        #dueTodayHeader:hover { background: rgba(255,255,255,0.02); }
+        #dueTodayList { padding: 0 12px 12px; }
+        .due-today-chevron { transition: transform 0.2s; }
+        .due-today-chevron.open { transform: rotate(180deg); }
+
+        /* ── Task Card (default / task view) ── */
+        .task-card {
+            padding: 20px 24px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+        .task-card:hover { border-color: rgba(59,130,246,0.2); transform: translateY(-1px); }
+
+        /* ── Task Row (list view) ── */
+        .task-row {
+            padding: 12px 16px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.15s;
+        }
+        .task-row:hover { background: rgba(255,255,255,0.03); }
+        .task-row + .task-row {
+            border-top: 1px solid var(--border);
+            border-radius: 0;
+            margin-top: 0;
+        }
+        .task-row:first-child { border-radius: 14px 14px 0 0; }
+        .task-row:last-child { border-radius: 0 0 14px 14px; }
+        .task-row:only-child { border-radius: 14px; }
+
+        /* List view wrapper */
+        .list-view-group {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            background: var(--card);
+            margin-bottom: 12px;
+        }
+        .list-view-group-header {
+            padding: 10px 16px;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.01);
+        }
+
+        /* ── New list modal ── */
+        #newListModal {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+        }
+        #newListModalCard {
+            background: #141414;
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 32px;
+            width: 340px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+        }
+        .light-theme #newListModalCard { background: #fff; }
+        .color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .color-swatch.selected { border-color: white; transform: scale(1.15); }
+        .light-theme .color-swatch.selected { border-color: #0f172a; }
+
+        /* ── Animations ── */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in { animation: slideIn 0.2s ease forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* ── Today badge ── */
+        .today-badge {
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 7px;
+            border-radius: 50px;
+            background: rgba(37,99,235,0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(37,99,235,0.3);
+            margin-left: 6px;
+        }
+        .overdue-badge {
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 2px 7px;
+            border-radius: 50px;
+            background: rgba(244,63,94,0.12);
+            color: #fb7185;
+            border: 1px solid rgba(244,63,94,0.25);
+            margin-left: 6px;
+        }
+
+        #mainApp { display: flex; flex-direction: column; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 md:p-8">
+<body class="flex items-center justify-center p-4 md:p-8">
 
-    <div id="landingScreen" class="w-full max-w-2xl glass-card rounded-[3.5rem] p-12 text-center">
-        <h1 class="text-6xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">Focus - Task Tracker</h1>
-        <p class="text-[var(--text-muted)] text-sm mb-6 font-bold tracking-widest uppercase">Made by Alex :)</p>
-        
-        <div class="mb-10 text-left bg-[var(--input)] border border-[var(--border)] p-6 rounded-3xl">
-            <h2 class="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">About the App</h2>
-            <p class="text-xs opacity-70 leading-relaxed mb-4">
-                Focus - Task Tracker is a productivity site designed to help you organize your daily goals with priority levels as well as due dates. 
-                Sign in with Google to sync goals across devices and save your tasks to our database.
-            </p>
-            <h2 class="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-2">Support & Developer</h2>
-            <p class="text-xs opacity-70">For support inquiries: simplifiedgroup10@gmail.com</p>
+    <!-- ═══════════════════ LANDING ═══════════════════ -->
+    <div id="landingScreen" class="w-full max-w-xl glass-card rounded-[3.5rem] p-12 text-center">
+        <h1 class="text-5xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent mb-2">Focus</h1>
+        <p class="text-[var(--text-muted)] text-[10px] mb-8 font-black tracking-widest uppercase">Task Tracker · Made by Alex :)</p>
+
+        <div class="mb-8 text-left bg-[var(--input)] border border-[var(--border)] p-6 rounded-3xl">
+            <h2 class="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-2">About the App</h2>
+            <p class="text-xs opacity-60 leading-relaxed mb-4">Focus is a productivity tracker to organise daily goals with priority levels, due dates, and multiple custom lists. Sign in with Google to sync across devices.</p>
+            <h2 class="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-2">Support</h2>
+            <p class="text-xs opacity-60">simplifiedgroup10@gmail.com</p>
         </div>
 
-        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-xl font-black transition-all btn-glow mb-8">Sign in with Google</button>
+        <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-lg font-black transition-all btn-glow mb-8">Sign in with Google</button>
 
         <footer class="flex justify-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
             <a href="terms.html" class="text-[10px] font-black uppercase tracking-widest hover:text-blue-500">Terms of Service</a>
@@ -111,58 +379,112 @@
         </footer>
     </div>
 
+    <!-- ═══════════════════ MAIN APP ═══════════════════ -->
     <div id="mainApp" class="w-full max-w-3xl glass-card rounded-[3.5rem] p-8 md:p-12 hidden">
-        
-        <header class="flex justify-between items-start mb-8">
+
+        <!-- Header -->
+        <header class="flex justify-between items-start mb-6">
             <div>
-                <h1 class="text-4xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">Focus - Task Tracker</h1>
-                <div class="flex items-center gap-4 mt-3">
+                <h1 class="text-3xl font-black tracking-tighter bg-gradient-to-br from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent">Focus</h1>
+                <div class="flex items-center gap-4 mt-2 flex-wrap">
                     <div id="stats" class="text-[10px] font-bold uppercase tracking-widest opacity-40">0 Tasks Remaining</div>
-                    <button onclick="clearCompleted()" class="text-[10px] font-bold uppercase tracking-widest text-rose-500/80 hover:text-rose-400">✕ Clear Done</button>
-                    <button onclick="logout()" class="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100">Logout</button>
+                    <button onclick="clearCompleted()" class="text-[10px] font-bold uppercase tracking-widest text-rose-500/70 hover:text-rose-400 transition-colors">✕ Clear Done</button>
+                    <button onclick="logout()" class="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity">Logout</button>
                 </div>
             </div>
-            <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 flex items-center justify-center rounded-2xl bg-[var(--input)] border border-[var(--border)] text-xl">🌙</button>
+            <div class="flex gap-2">
+                <!-- View Toggle -->
+                <button onclick="toggleView()" id="viewBtn" class="btn-icon" title="Toggle view">☰</button>
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" id="themeBtn" class="btn-icon" title="Toggle theme">🌙</button>
+            </div>
         </header>
 
-        <div class="flex gap-4 mb-8">
+        <!-- List Tab Bar -->
+        <div class="mb-5">
+            <div id="listTabBar"></div>
+        </div>
+
+        <!-- Search + Sort -->
+        <div class="flex gap-3 mb-6">
             <div class="relative flex-1">
-                <input type="text" id="searchInput" oninput="render()" placeholder="Filter goals..." class="w-full pl-10 pr-4 py-3 rounded-2xl text-xs outline-none">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-30 text-xs">🔍</span>
+                <input type="text" id="searchInput" oninput="render()" placeholder="Filter tasks..." class="w-full pl-9 pr-4 py-3 rounded-2xl text-xs">
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 opacity-30 text-sm">🔍</span>
             </div>
-            <select id="sortControl" onchange="render()" class="px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer">
-                <option value="newest">Newest First</option>
-                <option value="priority">By Priority</option>
-                <option value="dueDate">By Due Date</option>
+            <select id="sortControl" onchange="render()" class="px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                <option value="newest">Newest</option>
+                <option value="priority">Priority</option>
+                <option value="dueDate">Due Date</option>
             </select>
         </div>
 
-        <div class="p-8 rounded-[2.5rem] bg-[var(--input)] border border-[var(--border)] mb-8 shadow-inner">
+        <!-- Add Task Form -->
+        <div class="p-6 rounded-[2rem] bg-[var(--input)] border border-[var(--border)] mb-6 shadow-inner">
             <input type="text" id="taskInput" placeholder="What will you do today?" class="w-full bg-transparent !border-0 !p-0 mb-2 text-xl font-bold focus:ring-0">
-            <textarea id="descInput" placeholder="Add a goal description..." class="w-full bg-transparent !border-0 !p-0 mb-6 text-sm opacity-50 focus:ring-0 resize-none h-10"></textarea>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <select id="priorityInput" class="px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
-                    <option value="1">Low Priority</option>
-                    <option value="2">Medium Priority</option>
-                    <option value="3">High Priority</option>
+            <textarea id="descInput" placeholder="Add a description..." class="w-full bg-transparent !border-0 !p-0 mb-5 text-sm opacity-50 focus:ring-0 resize-none h-9"></textarea>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <select id="priorityInput" class="px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                    <option value="1">Low</option>
+                    <option value="2">Medium</option>
+                    <option value="3">High</option>
                 </select>
-                <input type="date" id="dateInput" class="px-4 py-3 rounded-xl text-xs font-bold opacity-60">
-                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase tracking-widest text-[10px] btn-glow">Add Task</button>
+                <select id="listInput" class="px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer">
+                    <option value="">No List</option>
+                </select>
+                <input type="date" id="dateInput" class="px-3 py-2.5 rounded-xl text-xs font-bold opacity-60">
+                <button onclick="addTask()" class="bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] btn-glow transition-all">Add Task</button>
             </div>
         </div>
 
-        <div class="mb-6 px-2">
-            <div class="flex justify-between mb-2"><span class="text-[9px] font-bold text-blue-500 uppercase tracking-widest">Journey Progress</span><span id="progressPercent" class="text-[9px] font-black text-blue-500">0%</span></div>
-            <div class="w-full h-1 bg-[var(--input)] rounded-full border border-[var(--border)] overflow-hidden">
-                <div id="progressFill" class="h-full bg-blue-600 transition-all duration-500" style="width: 0%"></div>
+        <!-- Progress Bar -->
+        <div class="mb-5 px-1">
+            <div class="flex justify-between mb-1.5">
+                <span class="text-[9px] font-black uppercase tracking-widest text-blue-500">Journey Progress</span>
+                <span id="progressPercent" class="text-[9px] font-black text-blue-500">0%</span>
+            </div>
+            <div class="w-full h-1 bg-[var(--surface)] rounded-full border border-[var(--border)] overflow-hidden">
+                <div id="progressFill" class="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-500 rounded-full" style="width:0%"></div>
             </div>
         </div>
 
-        <ul id="taskList" class="space-y-4"></ul>
+        <!-- Due Today Section -->
+        <div id="dueTodaySection" class="hidden">
+            <div id="dueTodayHeader" onclick="toggleDueToday()">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-blue-400">📅 Due Today</span>
+                    <span id="dueTodayCount" class="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">0</span>
+                </div>
+                <svg id="dueTodayChevron" class="due-today-chevron open" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round">
+                    <polyline points="18 15 12 9 6 15"/>
+                </svg>
+            </div>
+            <div id="dueTodayList"></div>
+        </div>
+
+        <!-- Task List -->
+        <div id="taskListWrap">
+            <ul id="taskList" class="space-y-3"></ul>
+        </div>
+
+    </div><!-- /mainApp -->
+
+    <!-- ═══════════════════ NEW LIST MODAL ═══════════════════ -->
+    <div id="newListModal" class="hidden" onclick="closeListModal(event)">
+        <div id="newListModalCard" class="animate-in">
+            <h2 class="text-xs font-black uppercase tracking-widest text-blue-500 mb-4">Create New List</h2>
+            <input type="text" id="newListName" placeholder="List name..." maxlength="30"
+                class="w-full px-4 py-3 rounded-xl text-sm font-bold mb-4">
+            <p class="text-[9px] font-black uppercase tracking-widest opacity-40 mb-3">Pick a colour</p>
+            <div class="flex gap-2 flex-wrap mb-6" id="colorSwatches"></div>
+            <div class="flex gap-3">
+                <button onclick="closeListModal()" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-[var(--border)] opacity-60 hover:opacity-100 transition-opacity">Cancel</button>
+                <button onclick="confirmAddList()" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-blue-600 hover:bg-blue-500 text-white btn-glow transition-all">Create List</button>
+            </div>
+        </div>
     </div>
 
     <script>
+        /* ─────────────── Firebase ─────────────── */
         const firebaseConfig = {
             apiKey: "AIzaSyARBwnkKCK5cu-YPro8dUQBjIwi6mjzjzQ",
             authDomain: "focus-by-alex-3e956.firebaseapp.com",
@@ -171,111 +493,397 @@
             messagingSenderId: "1073410411692",
             appId: "1:1073410411692:web:5aa2f0d1e89b24985de309"
         };
-
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const db = firebase.firestore();
+        const db   = firebase.firestore();
         const provider = new firebase.auth.GoogleAuthProvider();
 
-        let tasks = [];
-        let isDark = true;
+        /* ─────────────── State ─────────────── */
+        let tasks         = [];
+        let lists         = [];
+        let isDark        = true;
+        let viewMode      = 'task';   // 'task' | 'list'
+        let currentListId = 'all';    // 'all' | list id
+        let dueTodayOpen  = true;
+        let selectedColor = '#3b82f6';
 
+        const LIST_COLORS = [
+            '#3b82f6','#6366f1','#8b5cf6','#ec4899',
+            '#f43f5e','#f97316','#eab308','#22c55e',
+            '#14b8a6','#06b6d4','#64748b'
+        ];
+
+        const priorityMap = {
+            '1': { label:'LOW',    css:'text-blue-500 border-blue-500/20 bg-blue-500/5' },
+            '2': { label:'MEDIUM', css:'text-amber-500 border-amber-500/20 bg-amber-500/5' },
+            '3': { label:'HIGH',   css:'text-rose-500 border-rose-500/20 bg-rose-500/5' }
+        };
+
+        function todayStr() {
+            return new Date().toISOString().slice(0,10);
+        }
+
+        /* ─────────────── Auth ─────────────── */
         auth.onAuthStateChanged(user => {
             document.getElementById('landingScreen').classList.toggle('hidden', !!user);
             document.getElementById('mainApp').classList.toggle('hidden', !user);
-            if (user) loadTasks(user.uid);
+            if (user) { loadLists(user.uid); loadTasks(user.uid); }
         });
-
-        function login() { auth.signInWithPopup(provider); }
+        function login()  { auth.signInWithPopup(provider); }
         function logout() { auth.signOut(); }
 
+        /* ─────────────── Theme ─────────────── */
         function toggleTheme() {
             isDark = !isDark;
             document.body.classList.toggle('light-theme');
             document.getElementById('themeBtn').innerHTML = isDark ? '🌙' : '☀️';
         }
 
-        const priorityMap = {
-            '1': { label: 'LOW', css: 'text-blue-500 border-blue-500/20 bg-blue-500/5' },
-            '2': { label: 'MEDIUM', css: 'text-amber-500 border-amber-500/20 bg-amber-500/5' },
-            '3': { label: 'HIGH', css: 'text-rose-500 border-rose-500/20 bg-rose-500/5' }
-        };
+        /* ─────────────── View Toggle ─────────────── */
+        function toggleView() {
+            viewMode = viewMode === 'task' ? 'list' : 'task';
+            const btn = document.getElementById('viewBtn');
+            btn.innerHTML        = viewMode === 'task' ? '☰' : '⊞';
+            btn.title            = viewMode === 'task' ? 'Switch to list view' : 'Switch to card view';
+            btn.classList.toggle('active', viewMode === 'list');
+            render();
+        }
 
-        function addTask() {
+        /* ─────────────── Lists ─────────────── */
+        function loadLists(uid) {
+            db.collection('lists').where('uid','==',uid).orderBy('createdAt').onSnapshot(snap => {
+                lists = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderListTabs();
+                populateListSelect();
+                render();
+            });
+        }
+
+        function renderListTabs() {
+            const bar = document.getElementById('listTabBar');
+            bar.innerHTML = '';
+
+            // All Tasks tab
+            const allTab = document.createElement('div');
+            allTab.className = 'list-tab' + (currentListId === 'all' ? ' active' : '');
+            allTab.innerHTML = `<span class="list-dot" style="background:#3b82f6"></span>All Tasks`;
+            allTab.onclick = () => selectList('all');
+            bar.appendChild(allTab);
+
+            // Individual list tabs
+            lists.forEach(l => {
+                const tab = document.createElement('div');
+                tab.className = 'list-tab' + (currentListId === l.id ? ' active' : '');
+                tab.innerHTML = `
+                    <span class="list-dot" style="background:${l.color}"></span>
+                    ${escHtml(l.name)}
+                    <span class="del-list" onclick="event.stopPropagation();deleteList('${l.id}')" title="Delete list">✕</span>
+                `;
+                tab.onclick = () => selectList(l.id);
+                bar.appendChild(tab);
+            });
+
+            // Add list button
+            const addBtn = document.createElement('div');
+            addBtn.className = 'list-add-btn';
+            addBtn.innerHTML = '＋ New List';
+            addBtn.onclick = openListModal;
+            bar.appendChild(addBtn);
+        }
+
+        function selectList(id) {
+            currentListId = id;
+            renderListTabs();
+            render();
+        }
+
+        function populateListSelect() {
+            const sel = document.getElementById('listInput');
+            sel.innerHTML = '<option value="">No List</option>';
+            lists.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = l.name;
+                sel.appendChild(opt);
+            });
+            // Pre-select current list if filtering
+            if (currentListId !== 'all') sel.value = currentListId;
+        }
+
+        async function deleteList(id) {
+            if (!confirm('Delete this list? Tasks in it will remain but lose their list.')) return;
+            // Unset listId on all tasks in that list
+            const snap = await db.collection('tasks').where('listId','==',id).get();
+            const batch = db.batch();
+            snap.docs.forEach(d => batch.update(d.ref, { listId: '' }));
+            batch.delete(db.collection('lists').doc(id));
+            await batch.commit();
+            if (currentListId === id) selectList('all');
+        }
+
+        /* ─────────────── New List Modal ─────────────── */
+        function openListModal() {
+            selectedColor = LIST_COLORS[0];
+            document.getElementById('newListName').value = '';
+            buildColorSwatches();
+            document.getElementById('newListModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('newListName').focus(), 50);
+        }
+        function closeListModal(e) {
+            if (!e || e.target === document.getElementById('newListModal')) {
+                document.getElementById('newListModal').classList.add('hidden');
+            }
+        }
+        function buildColorSwatches() {
+            const wrap = document.getElementById('colorSwatches');
+            wrap.innerHTML = '';
+            LIST_COLORS.forEach(c => {
+                const s = document.createElement('div');
+                s.className = 'color-swatch' + (c === selectedColor ? ' selected' : '');
+                s.style.background = c;
+                s.onclick = () => {
+                    selectedColor = c;
+                    wrap.querySelectorAll('.color-swatch').forEach(x => x.classList.remove('selected'));
+                    s.classList.add('selected');
+                };
+                wrap.appendChild(s);
+            });
+        }
+        async function confirmAddList() {
+            const name = document.getElementById('newListName').value.trim();
+            if (!name) return;
             const user = auth.currentUser;
-            const title = document.getElementById('taskInput').value;
-            const desc = document.getElementById('descInput').value;
-            if (!user || !title.trim()) return;
+            await db.collection('lists').add({
+                uid: user.uid,
+                name,
+                color: selectedColor,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            closeListModal();
+        }
+
+        /* ─────────────── Tasks CRUD ─────────────── */
+        function addTask() {
+            const user  = auth.currentUser;
+            const title = document.getElementById('taskInput').value.trim();
+            if (!user || !title) return;
 
             db.collection('tasks').add({
-                uid: user.uid,
-                text: title,
-                description: desc,
-                priority: document.getElementById('priorityInput').value,
-                date: document.getElementById('dateInput').value,
-                completed: false,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                uid:         user.uid,
+                text:        title,
+                description: document.getElementById('descInput').value,
+                priority:    document.getElementById('priorityInput').value,
+                listId:      document.getElementById('listInput').value,
+                date:        document.getElementById('dateInput').value,
+                completed:   false,
+                createdAt:   firebase.firestore.FieldValue.serverTimestamp()
             });
             document.getElementById('taskInput').value = '';
             document.getElementById('descInput').value = '';
         }
 
         function loadTasks(uid) {
-            db.collection('tasks').where('uid', '==', uid).onSnapshot(snapshot => {
-                tasks = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+            db.collection('tasks').where('uid','==',uid).onSnapshot(snap => {
+                tasks = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 render();
             });
         }
 
         function clearCompleted() {
-            if(!confirm("Clear finished goals?")) return;
-            tasks.filter(t => t.completed).forEach(t => db.collection('tasks').doc(t.id).delete());
+            if (!confirm('Clear finished tasks?')) return;
+            let target = tasks.filter(t => t.completed);
+            if (currentListId !== 'all') target = target.filter(t => t.listId === currentListId);
+            target.forEach(t => db.collection('tasks').doc(t.id).delete());
         }
 
-        function toggleTask(id, currentStatus) { db.collection('tasks').doc(id).update({ completed: !currentStatus }); }
-        function deleteTask(id) { db.collection('tasks').doc(id).delete(); }
+        function toggleTask(id, current) { db.collection('tasks').doc(id).update({ completed: !current }); }
+        function deleteTask(id)          { db.collection('tasks').doc(id).delete(); }
 
+        /* ─────────────── Due Today ─────────────── */
+        function toggleDueToday() {
+            dueTodayOpen = !dueTodayOpen;
+            document.getElementById('dueTodayList').classList.toggle('hidden', !dueTodayOpen);
+            document.getElementById('dueTodayChevron').classList.toggle('open', dueTodayOpen);
+        }
+
+        function renderDueToday(filtered) {
+            const today    = todayStr();
+            const due      = filtered.filter(t => t.date === today && !t.completed);
+            const section  = document.getElementById('dueTodaySection');
+            const listEl   = document.getElementById('dueTodayList');
+            const countEl  = document.getElementById('dueTodayCount');
+
+            if (due.length === 0) { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+            countEl.textContent = due.length;
+            listEl.innerHTML    = '';
+            if (!dueTodayOpen) return;
+
+            due.forEach(task => {
+                const listObj = lists.find(l => l.id === task.listId);
+                const row = document.createElement('div');
+                row.className = 'task-row';
+                row.innerHTML = `
+                    <input type="checkbox" ${task.completed?'checked':''} onchange="toggleTask('${task.id}',${task.completed})"
+                        class="custom-checkbox w-5 h-5 rounded-md border-2 border-[var(--border)] bg-[var(--input)]">
+                    <span class="flex-1 text-sm font-semibold ${task.completed?'task-done':''}">${escHtml(task.text)}</span>
+                    ${listObj ? `<span class="text-[8px] font-black px-2 py-0.5 rounded-full border" style="color:${listObj.color};border-color:${listObj.color}40;background:${listObj.color}10">${escHtml(listObj.name)}</span>` : ''}
+                    <span class="text-[8px] font-black px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Today</span>
+                    <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-sm transition-colors">✕</button>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        /* ─────────────── Main Render ─────────────── */
         function render() {
-            const list = document.getElementById('taskList');
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const sortBy = document.getElementById('sortControl').value;
-            list.innerHTML = '';
-            
+            const list    = document.getElementById('taskList');
+            const search  = document.getElementById('searchInput').value.toLowerCase();
+            const sortBy  = document.getElementById('sortControl').value;
+
             let filtered = tasks.filter(t => t.text.toLowerCase().includes(search));
+            if (currentListId !== 'all') filtered = filtered.filter(t => t.listId === currentListId);
 
             filtered.sort((a, b) => {
                 if (sortBy === 'priority') return b.priority - a.priority;
-                if (sortBy === 'dueDate') return new Date(a.date || '9999-12-31') - new Date(b.date || '9999-12-31');
+                if (sortBy === 'dueDate')  return new Date(a.date || '9999-12-31') - new Date(b.date || '9999-12-31');
                 return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
             });
 
+            // Due today
+            renderDueToday(filtered);
+
+            list.innerHTML = '';
+            const today = todayStr();
+
+            if (viewMode === 'task') {
+                renderTaskView(list, filtered, today);
+            } else {
+                renderListView(list, filtered, today);
+            }
+
+            // Stats & progress
+            const scope     = currentListId === 'all' ? tasks : tasks.filter(t => t.listId === currentListId);
+            const completed = scope.filter(t => t.completed).length;
+            const pct       = scope.length === 0 ? 0 : Math.round((completed / scope.length) * 100);
+            document.getElementById('progressFill').style.width   = pct + '%';
+            document.getElementById('progressPercent').textContent = pct + '%';
+            document.getElementById('stats').textContent           = `${scope.length - completed} Task${scope.length - completed !== 1 ? 's' : ''} Remaining`;
+        }
+
+        /* ── Task card view ── */
+        function renderTaskView(list, filtered, today) {
             filtered.forEach(task => {
+                const listObj  = lists.find(l => l.id === task.listId);
+                const isToday  = task.date === today;
+                const isOver   = task.date && task.date < today && !task.completed;
+
                 const li = document.createElement('li');
-                li.className = `p-6 rounded-3xl border border-[var(--border)] bg-[var(--card)] flex items-start justify-between transition-all`;
+                li.className = 'task-card animate-in';
                 li.innerHTML = `
-                    <div class="flex items-start gap-5">
-                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}', ${task.completed})" 
-                            class="custom-checkbox w-6 h-6 mt-1 rounded-lg border-2 border-[var(--border)] bg-[var(--input)] cursor-pointer transition-all">
-                        <div>
-                            <p class="text-lg font-bold ${task.completed ? 'task-done' : ''}">${task.text}</p>
-                            ${task.description ? `<p class="text-[11px] opacity-40 mt-1 max-w-xs">${task.description}</p>` : ''}
-                            <div class="flex items-center gap-3 mt-3">
-                                <span class="text-[8px] font-black px-2 py-0.5 rounded border ${priorityMap[task.priority].css}">${priorityMap[task.priority].label}</span>
-                                ${task.date ? `<span class="text-[9px] opacity-30 font-bold">📅 ${task.date}</span>` : ''}
+                    <div class="flex items-start gap-4 flex-1 min-w-0">
+                        <input type="checkbox" ${task.completed?'checked':''} onchange="toggleTask('${task.id}',${task.completed})"
+                            class="custom-checkbox w-6 h-6 mt-0.5 rounded-lg border-2 border-[var(--border)] bg-[var(--input)]">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-base font-bold leading-snug ${task.completed?'task-done':''}">${escHtml(task.text)}</p>
+                            ${task.description ? `<p class="text-[11px] opacity-40 mt-1 line-clamp-2">${escHtml(task.description)}</p>` : ''}
+                            <div class="flex items-center gap-2 mt-3 flex-wrap">
+                                <span class="text-[8px] font-black px-2 py-0.5 rounded border ${priorityMap[task.priority]?.css || ''}">${priorityMap[task.priority]?.label || ''}</span>
+                                ${listObj ? `<span class="text-[8px] font-black px-2 py-0.5 rounded-full border" style="color:${listObj.color};border-color:${listObj.color}40;background:${listObj.color}10">${escHtml(listObj.name)}</span>` : ''}
+                                ${task.date ? `<span class="text-[9px] opacity-40 font-bold">📅 ${task.date}</span>` : ''}
+                                ${isToday && !task.completed ? `<span class="today-badge">Today</span>` : ''}
+                                ${isOver  ? `<span class="overdue-badge">Overdue</span>` : ''}
                             </div>
                         </div>
                     </div>
-                    <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-lg p-2 transition-colors">✕</button>
+                    <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-base p-1.5 transition-colors flex-shrink-0">✕</button>
                 `;
                 list.appendChild(li);
             });
 
-            const completed = tasks.filter(t => t.completed).length;
-            const percent = tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100);
-            document.getElementById('progressFill').style.width = percent + '%';
-            document.getElementById('progressPercent').innerText = percent + '%';
-            document.getElementById('stats').innerText = `${tasks.length - completed} Tasks Remaining`;
+            if (filtered.length === 0) {
+                list.innerHTML = `<li class="text-center py-12 opacity-30 text-sm font-bold">No tasks here yet ✨</li>`;
+            }
         }
+
+        /* ── List view (grouped by list) ── */
+        function renderListView(list, filtered, today) {
+            // Group by list
+            const groups = {};
+            const noList = [];
+
+            filtered.forEach(task => {
+                if (task.listId) {
+                    if (!groups[task.listId]) groups[task.listId] = [];
+                    groups[task.listId].push(task);
+                } else {
+                    noList.push(task);
+                }
+            });
+
+            // Render each list group
+            const renderGroup = (label, color, taskArr) => {
+                if (taskArr.length === 0) return;
+                const wrap = document.createElement('li');
+                wrap.className = 'list-view-group animate-in';
+
+                const header = document.createElement('div');
+                header.className = 'list-view-group-header';
+                header.innerHTML = `
+                    <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color}"></span>
+                    <span style="color:${color}">${escHtml(label)}</span>
+                    <span class="opacity-30">${taskArr.length}</span>
+                `;
+                wrap.appendChild(header);
+
+                taskArr.forEach((task, idx) => {
+                    const isToday = task.date === today;
+                    const isOver  = task.date && task.date < today && !task.completed;
+                    const row = document.createElement('div');
+                    row.className = 'task-row';
+                    row.innerHTML = `
+                        <input type="checkbox" ${task.completed?'checked':''} onchange="toggleTask('${task.id}',${task.completed})"
+                            class="custom-checkbox w-5 h-5 rounded-md border-2 border-[var(--border)] bg-[var(--input)]">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold ${task.completed?'task-done':''}">${escHtml(task.text)}</p>
+                            ${task.date ? `<p class="text-[9px] opacity-30 font-bold mt-0.5">📅 ${task.date}${isToday&&!task.completed?' <span class="today-badge">Today</span>':''}${isOver?'<span class="overdue-badge ml-1">Overdue</span>':''}</p>` : ''}
+                        </div>
+                        <span class="text-[8px] font-black px-2 py-0.5 rounded border ${priorityMap[task.priority]?.css||''} flex-shrink-0">${priorityMap[task.priority]?.label||''}</span>
+                        <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-sm transition-colors flex-shrink-0">✕</button>
+                    `;
+                    wrap.appendChild(row);
+                });
+
+                list.appendChild(wrap);
+            };
+
+            // Lists with names
+            lists.forEach(l => {
+                if (groups[l.id]) renderGroup(l.name, l.color, groups[l.id]);
+            });
+
+            // Tasks without a list
+            renderGroup('No List', '#64748b', noList);
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<li class="text-center py-12 opacity-30 text-sm font-bold">No tasks here yet ✨</li>`;
+            }
+        }
+
+        /* ─────────────── Utils ─────────────── */
+        function escHtml(str = '') {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Allow Enter key to add tasks
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('taskInput')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') addTask();
+            });
+            document.getElementById('newListName')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') confirmAddList();
+            });
+        });
     </script>
 </body>
 </html>
