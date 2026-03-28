@@ -671,17 +671,17 @@
             });
         }
         async function confirmAddList() {
-            const name = document.getElementById('newListName').value.trim();
-            if (!name) return;
-            const user = auth.currentUser;
-            await db.collection('lists').add({
-                uid: user.uid,
-                name,
-                color: selectedColor,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            closeListModal();
-        }
+    const name = document.getElementById('newListName').value.trim();
+    if (!name) return;
+    const user = auth.currentUser; // Get current user
+    await db.collection('lists').add({
+        uid: user.uid,            // Ensure this line is exactly here
+        name,
+        color: selectedColor,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeListModal();
+}
 
         /* ─────────────── Tasks CRUD ─────────────── */
         function addTask() {
