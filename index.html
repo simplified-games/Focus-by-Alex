@@ -629,30 +629,16 @@
 
         async function deleteList(id) {
             if (!confirm('Delete this list? Tasks in it will remain but lose their list.')) return;
-            
             try {
-                // 1. Get all tasks associated with this list
                 const snap = await db.collection('tasks').where('listId','==',id).get();
                 const batch = db.batch();
-                
-                // 2. Tell the batch to remove the listId from each task
-                snap.docs.forEach(d => {
-                    batch.update(d.ref, { listId: '' });
-                });
-                
-                // 3. Tell the batch to delete the list document itself
+                snap.docs.forEach(d => batch.update(d.ref, { listId: '' }));
                 batch.delete(db.collection('lists').doc(id));
-                await batch.commit(); // <--- MAKE SURE THIS LINE IS HERE
+                await batch.commit(); // This sends the data to Firebase
                 if (currentListId === id) selectList('all');
-                
-                // 4. CRITICAL: You must await the commit to actually run the batch!
-                await batch.commit(); 
-                
-                if (currentListId === id) selectList('all');
-                console.log("List and task associations deleted successfully");
             } catch (error) {
-                console.error("Error deleting list:", error);
-                alert("Could not delete list. Check browser console for details.");
+                console.error("Delete failed:", error);
+                alert("Permission error. Please check your Firebase Security Rules.");
             }
         }
 
