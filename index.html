@@ -642,6 +642,8 @@
                 
                 // 3. Tell the batch to delete the list document itself
                 batch.delete(db.collection('lists').doc(id));
+                await batch.commit(); // <--- MAKE SURE THIS LINE IS HERE
+                if (currentListId === id) selectList('all');
                 
                 // 4. CRITICAL: You must await the commit to actually run the batch!
                 await batch.commit(); 
