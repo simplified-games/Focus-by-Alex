@@ -902,11 +902,14 @@
 
         // Allow Enter key to add tasks
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('taskInput')?.addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    addTask();
-                }
-            });
+            const taskInput = document.getElementById('taskInput');
+            if (taskInput) {
+                taskInput.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') {
+                        addTask();
+                    }
+                });
+            }
         });
     </script>
 </body>
