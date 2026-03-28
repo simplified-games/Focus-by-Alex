@@ -378,7 +378,7 @@
             <h2 class="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-2">About the App</h2>
             <p class="text-xs opacity-60 leading-relaxed mb-4">Focus is a productivity tracker to organise daily goals with priority levels, due dates, and multiple custom lists. Sign in with Google to sync across devices.</p>
             <h2 class="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-2">Support</h2>
-            <p class="text-xs opacity-60"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e4978d8994888d828d818083968b9194d5d4a48389858d88ca878b89">[email&#160;protected]</a></p>
+            <p class="text-xs opacity-60"><a href="mailto:simplifiedgroup10@gmail.com" class="hover:text-blue-500 transition-colors">simplifiedgroup10@gmail.com</a></p>
         </div>
 
         <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-lg font-black transition-all btn-glow mb-8">Sign in with Google</button>
@@ -900,4 +900,11 @@
         // Allow Enter key to add tasks
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('taskInput')?.addEventListener('keydown', e => {
-                if (e.key ===
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
