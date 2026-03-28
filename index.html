@@ -197,20 +197,23 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            padding: 7px 14px;
+            padding: 7px 16px;
             border-radius: 50px;
-            border: 1px solid rgba(59,130,246,0.35);
+            /* Made the border thicker and darker blue for visibility */
+            border: 2px solid #3b82f6; 
             cursor: pointer;
             white-space: nowrap;
-            font-size: 10px;
-            font-weight: 800;
-            color: #60a5fa;
-            background: rgba(37,99,235,0.08);
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
+            /* Added a solid background so it doesn't blend in */
+            background: #2563eb; 
             transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
         }
         .list-add-btn:hover {
-            border-color: rgba(59,130,246,0.65);
-            background: rgba(37,99,235,0.15);
+            background: #1d4ed8;
+            transform: translateY(-1px);
         }
 
         /* ── Due Today Section ── */
