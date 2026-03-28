@@ -630,15 +630,27 @@
         async function deleteList(id) {
             if (!confirm('Delete this list? Tasks in it will remain but lose their list.')) return;
             try {
-                const snap = await db.collection('tasks').where('listId','==',id).get();
                 const batch = db.batch();
-                snap.docs.forEach(d => batch.update(d.ref, { listId: '' }));
+                
+                // 1. Find the tasks using the data ALREADY in your browser's memory
+                const tasksInList = tasks.filter(t => t.listId === id);
+                
+                // 2. Tell the batch to update just those specific tasks
+                tasksInList.forEach(t => {
+                    const docRef = db.collection('tasks').doc(t.id);
+                    batch.update(docRef, { listId: '' });
+                });
+                
+                // 3. Delete the list itself
                 batch.delete(db.collection('lists').doc(id));
-                await batch.commit(); // This sends the data to Firebase
+                
+                // 4. Send it all to Firebase
+                await batch.commit(); 
+                
                 if (currentListId === id) selectList('all');
             } catch (error) {
                 console.error("Delete failed:", error);
-                alert("Permission error. Please check your Firebase Security Rules.");
+                alert("Error: " + error.message);
             }
         }
 
