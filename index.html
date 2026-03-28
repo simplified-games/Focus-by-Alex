@@ -197,18 +197,21 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            padding: 7px 12px;
+            padding: 7px 14px;
             border-radius: 50px;
-            border: 1px dashed var(--border);
+            border: 1px solid rgba(59,130,246,0.35);
             cursor: pointer;
             white-space: nowrap;
             font-size: 10px;
             font-weight: 800;
-            color: var(--text-muted);
-            background: transparent;
+            color: #60a5fa;
+            background: rgba(37,99,235,0.08);
             transition: all 0.2s;
         }
-        .list-add-btn:hover { border-color: rgba(59,130,246,0.4); color: #60a5fa; }
+        .list-add-btn:hover {
+            border-color: rgba(59,130,246,0.65);
+            background: rgba(37,99,235,0.15);
+        }
 
         /* ── Due Today Section ── */
         #dueTodaySection {
@@ -283,7 +286,14 @@
             gap: 8px;
             border-bottom: 1px solid var(--border);
             background: rgba(255,255,255,0.01);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s;
         }
+        .list-view-group-header:hover { background: rgba(255,255,255,0.03); }
+        .group-chevron { margin-left: auto; opacity: 0.45; transition: transform 0.2s; font-style: normal; font-size: 10px; }
+        .group-chevron.collapsed { transform: rotate(-90deg); }
+        .group-body.collapsed { display: none; }
 
         /* ── New list modal ── */
         #newListModal {
@@ -368,7 +378,7 @@
             <h2 class="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-2">About the App</h2>
             <p class="text-xs opacity-60 leading-relaxed mb-4">Focus is a productivity tracker to organise daily goals with priority levels, due dates, and multiple custom lists. Sign in with Google to sync across devices.</p>
             <h2 class="text-[9px] font-black uppercase tracking-widest text-blue-500 mb-2">Support</h2>
-            <p class="text-xs opacity-60">simplifiedgroup10@gmail.com</p>
+            <p class="text-xs opacity-60"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e4978d8994888d828d818083968b9194d5d4a48389858d88ca878b89">[email&#160;protected]</a></p>
         </div>
 
         <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-lg font-black transition-all btn-glow mb-8">Sign in with Google</button>
@@ -483,7 +493,7 @@
         </div>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         /* ─────────────── Firebase ─────────────── */
         const firebaseConfig = {
             apiKey: "AIzaSyARBwnkKCK5cu-YPro8dUQBjIwi6mjzjzQ",
@@ -504,8 +514,9 @@
         let isDark        = true;
         let viewMode      = 'task';   // 'task' | 'list'
         let currentListId = 'all';    // 'all' | list id
-        let dueTodayOpen  = true;
-        let selectedColor = '#3b82f6';
+        let dueTodayOpen    = true;
+        let selectedColor   = '#3b82f6';
+        let collapsedGroups = new Set(); // set of group keys that are collapsed
 
         const LIST_COLORS = [
             '#3b82f6','#6366f1','#8b5cf6','#ec4899',
@@ -806,9 +817,8 @@
             }
         }
 
-        /* ── List view (grouped by list) ── */
+        /* ── List view (grouped by list, collapsible) ── */
         function renderListView(list, filtered, today) {
-            // Group by list
             const groups = {};
             const noList = [];
 
@@ -821,49 +831,61 @@
                 }
             });
 
-            // Render each list group
-            const renderGroup = (label, color, taskArr) => {
+            const renderGroup = (key, label, color, taskArr) => {
                 if (taskArr.length === 0) return;
+                const isCollapsed = collapsedGroups.has(key);
+
                 const wrap = document.createElement('li');
                 wrap.className = 'list-view-group animate-in';
 
+                // Header (clickable to collapse)
                 const header = document.createElement('div');
                 header.className = 'list-view-group-header';
                 header.innerHTML = `
                     <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${color}"></span>
                     <span style="color:${color}">${escHtml(label)}</span>
-                    <span class="opacity-30">${taskArr.length}</span>
+                    <span class="opacity-30">${taskArr.length} task${taskArr.length !== 1 ? 's' : ''}</span>
+                    <span class="group-chevron${isCollapsed ? ' collapsed' : ''}">▾</span>
                 `;
+                header.onclick = () => {
+                    if (collapsedGroups.has(key)) collapsedGroups.delete(key);
+                    else collapsedGroups.add(key);
+                    // Toggle without full re-render for snappiness
+                    const body = wrap.querySelector('.group-body');
+                    const chev = header.querySelector('.group-chevron');
+                    body.classList.toggle('collapsed');
+                    chev.classList.toggle('collapsed');
+                };
                 wrap.appendChild(header);
 
-                taskArr.forEach((task, idx) => {
+                // Body
+                const body = document.createElement('div');
+                body.className = 'group-body' + (isCollapsed ? ' collapsed' : '');
+
+                taskArr.forEach(task => {
                     const isToday = task.date === today;
                     const isOver  = task.date && task.date < today && !task.completed;
                     const row = document.createElement('div');
                     row.className = 'task-row';
                     row.innerHTML = `
-                        <input type="checkbox" ${task.completed?'checked':''} onchange="toggleTask('${task.id}',${task.completed})"
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}',${task.completed})"
                             class="custom-checkbox w-5 h-5 rounded-md border-2 border-[var(--border)] bg-[var(--input)]">
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold ${task.completed?'task-done':''}">${escHtml(task.text)}</p>
-                            ${task.date ? `<p class="text-[9px] opacity-30 font-bold mt-0.5">📅 ${task.date}${isToday&&!task.completed?' <span class="today-badge">Today</span>':''}${isOver?'<span class="overdue-badge ml-1">Overdue</span>':''}</p>` : ''}
+                            <p class="text-sm font-semibold ${task.completed ? 'task-done' : ''}">${escHtml(task.text)}</p>
+                            ${task.date ? `<p class="text-[9px] opacity-30 font-bold mt-0.5">📅 ${task.date}${isToday && !task.completed ? ' <span class="today-badge">Today</span>' : ''}${isOver ? '<span class="overdue-badge ml-1">Overdue</span>' : ''}</p>` : ''}
                         </div>
-                        <span class="text-[8px] font-black px-2 py-0.5 rounded border ${priorityMap[task.priority]?.css||''} flex-shrink-0">${priorityMap[task.priority]?.label||''}</span>
+                        <span class="text-[8px] font-black px-2 py-0.5 rounded border ${priorityMap[task.priority]?.css || ''} flex-shrink-0">${priorityMap[task.priority]?.label || ''}</span>
                         <button onclick="deleteTask('${task.id}')" class="text-rose-500/30 hover:text-rose-500 text-sm transition-colors flex-shrink-0">✕</button>
                     `;
-                    wrap.appendChild(row);
+                    body.appendChild(row);
                 });
 
+                wrap.appendChild(body);
                 list.appendChild(wrap);
             };
 
-            // Lists with names
-            lists.forEach(l => {
-                if (groups[l.id]) renderGroup(l.name, l.color, groups[l.id]);
-            });
-
-            // Tasks without a list
-            renderGroup('No List', '#64748b', noList);
+            lists.forEach(l => { if (groups[l.id]) renderGroup(l.id, l.name, l.color, groups[l.id]); });
+            renderGroup('__nolist__', 'No List', '#64748b', noList);
 
             if (filtered.length === 0) {
                 list.innerHTML = `<li class="text-center py-12 opacity-30 text-sm font-bold">No tasks here yet ✨</li>`;
@@ -878,12 +900,4 @@
         // Allow Enter key to add tasks
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('taskInput')?.addEventListener('keydown', e => {
-                if (e.key === 'Enter') addTask();
-            });
-            document.getElementById('newListName')?.addEventListener('keydown', e => {
-                if (e.key === 'Enter') confirmAddList();
-            });
-        });
-    </script>
-</body>
-</html>
+                if (e.key ===
