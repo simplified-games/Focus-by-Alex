@@ -564,12 +564,15 @@
         }
 
         /* ─────────────── Lists ─────────────── */
+        // UPDATED: Removed .orderBy() to bypass the index requirement
         function loadLists(uid) {
-            db.collection('lists').where('uid','==',uid).orderBy('createdAt').onSnapshot(snap => {
+            db.collection('lists').where('uid','==',uid).onSnapshot(snap => {
                 lists = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 renderListTabs();
                 populateListSelect();
                 render();
+            }, error => {
+                console.error("Firestore Error:", error);
             });
         }
 
